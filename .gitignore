@@ -1,0 +1,5 @@
+# Locally generated datasets; don't commit large CSV files.
+data/*.csv
+__pycache__/
+*.pyc
+.DS_Store

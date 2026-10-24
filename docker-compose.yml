@@ -1,0 +1,62 @@
+# Teaching-only local Hadoop HDFS cluster; not a production-secured deployment.
+services:
+  namenode:
+    image: apache/hadoop:3.5.0
+    container_name: classroom-namenode
+    hostname: namenode
+    user: root
+    command: ["bash", "/classroom/start-namenode.sh"]
+    ports:
+      - "127.0.0.1:9870:9870"
+    volumes:
+      - namenode_data:/data/namenode
+      - ./config/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./config/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+      - ./scripts/start-namenode.sh:/classroom/start-namenode.sh:ro
+    networks: [classroom]
+
+  datanode1: &datanode
+    image: apache/hadoop:3.5.0
+    hostname: datanode1
+    user: root
+    command: ["hdfs", "datanode"]
+    depends_on: [namenode]
+    volumes:
+      - datanode1_data:/data/datanode
+      - ./config/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./config/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+    networks: [classroom]
+  datanode2:
+    <<: *datanode
+    hostname: datanode2
+    volumes:
+      - datanode2_data:/data/datanode
+      - ./config/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./config/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+  datanode3:
+    <<: *datanode
+    hostname: datanode3
+    volumes:
+      - datanode3_data:/data/datanode
+      - ./config/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./config/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+
+  edge-node:
+    image: apache/hadoop:3.5.0
+    hostname: edge-node
+    # Client only: no HDFS daemon or public port; uses image's default non-root user.
+    command: ["bash", "-c", "sleep infinity"]
+    depends_on: [namenode, datanode1, datanode2, datanode3]
+    volumes:
+      - ./config/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./config/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+    networks: [classroom]
+
+networks:
+  classroom:
+    driver: bridge
+volumes:
+  namenode_data:
+  datanode1_data:
+  datanode2_data:
+  datanode3_data:
